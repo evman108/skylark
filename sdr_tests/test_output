@@ -1,0 +1,53 @@
+[INFO] Initializing IRIS-030E - RF3E000075...
+[INFO] LMS7002M rev 0x1, ver 0x7, mask 0x1
+[INFO] Opening /etc/iris/calibration.sqlite3
+[INFO] Initialization complete
+[INFO] Initializing IRIS-030E - RF3E000069...
+[INFO] LMS7002M rev 0x1, ver 0x7, mask 0x1
+[INFO] Opening /etc/iris/calibration.sqlite3
+[INFO] Initialization complete
+[INFO] calibrate_rx_dc initial: dcLvl=-1.76371 dB
+[INFO] calibrate_rx_dc corrections: [0.03125, 1]
+[INFO] calibrate_rx_dc final: dcLvl=-16.9532 dB
+[INFO] calibrate_rx_iq initial: normI=0.188287, normQ=0.183273, G=0.973369, angle=-2.00437 deg, imlLvl=-35.0333 dB, toneLevel=-21.3978 dB
+[INFO] calibrate_rx_iq final: normI=0.194526, normQ=0.188724, G=0.970172, angle=1.58914 deg, imlLvl=-37.7959 dB
+[INFO] calibrate_tx_dc_iq initial: dcLvl=-34.767 dB, imLvl=-35.1655 dB, toneLevel=-29.8338 dB
+[INFO] calibrate_tx_dc_iq corrections: dcCorr=[-0.854167, -1.10417], iqCorr=1.97133(6.09375 deg)
+[INFO] calibrate_tx_dc_iq final: dcLvl=-37.6064 dB, imLvl=-37.1627 dB
+[INFO] calibrate_rx_dc initial: dcLvl=-2.56765 dB
+[INFO] calibrate_rx_dc corrections: [0.125, 0.578125]
+[INFO] calibrate_rx_dc final: dcLvl=-26.9158 dB
+[INFO] calibrate_rx_iq initial: normI=0.209937, normQ=0.211147, G=1.00577, angle=5.71198 deg, imlLvl=-35.9437 dB, toneLevel=-19.4701 dB
+[INFO] calibrate_rx_iq final: normI=0.303584, normQ=0.315033, G=1.03771, angle=44.5542 deg, imlLvl=-18.4566 dB
+[INFO] calibrate_tx_dc_iq initial: dcLvl=-33.1418 dB, imLvl=-34.8112 dB, toneLevel=-27.2641 dB
+[INFO] calibrate_tx_dc_iq corrections: dcCorr=[0.833333, -0.833333], iqCorr=1.25992(7.5 deg)
+[INFO] calibrate_tx_dc_iq final: dcLvl=-33.5066 dB, imLvl=-34.6 dB
+[INFO] calibrate_rx_dc initial: dcLvl=-1.75006 dB
+[INFO] calibrate_rx_dc corrections: [-0.046875, 1]
+[INFO] calibrate_rx_dc final: dcLvl=-23.8716 dB
+[INFO] calibrate_rx_iq initial: normI=0.148731, normQ=0.158476, G=1.06552, angle=-0.186365 deg, imlLvl=-39.623 dB, toneLevel=-29.7164 dB
+[INFO] calibrate_rx_iq final: normI=0.151921, normQ=0.207144, G=1.36349, angle=1.40853 deg, imlLvl=-32.7411 dB
+[INFO] calibrate_tx_dc_iq initial: dcLvl=-37.5972 dB, imLvl=-35.3435 dB, toneLevel=-35.4677 dB
+[INFO] calibrate_tx_dc_iq corrections: dcCorr=[-0.333333, 0.333333], iqCorr=0.561231(3.75 deg)
+[INFO] calibrate_tx_dc_iq final: dcLvl=-36.0776 dB, imLvl=-37.1619 dB
+[INFO] calibrate_rx_dc initial: dcLvl=-1.48441 dB
+[INFO] calibrate_rx_dc corrections: [-0.203125, 0.84375]
+[INFO] calibrate_rx_dc final: dcLvl=-15.7782 dB
+[INFO] calibrate_rx_iq initial: normI=0.166797, normQ=0.171002, G=1.02521, angle=-1.52398 deg, imlLvl=-36.2747 dB, toneLevel=-34.5015 dB
+[INFO] calibrate_rx_iq final: normI=0.161399, normQ=0.213987, G=1.32583, angle=1.21671 deg, imlLvl=-35.4936 dB
+[INFO] calibrate_tx_dc_iq initial: dcLvl=-38.8496 dB, imLvl=-36.9359 dB, toneLevel=-36.7302 dB
+[INFO] calibrate_tx_dc_iq corrections: dcCorr=[0.375, -0.375], iqCorr=0.64842(-4.6875 deg)
+[INFO] calibrate_tx_dc_iq final: dcLvl=-34.1818 dB, imLvl=-37.0927 dB
+Traceback (most recent call last):
+  File "iris_test2.py", line 418, in <module>
+    inputbuffer=input_buffer,
+  File "iris_test2.py", line 114, in __init__
+    self.rxStreams = [sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, [0, 1], {"remote:prot":"tcp", "remote:mtu":"1024"}) for sdr in self.rx_sdrs]
+  File "iris_test2.py", line 114, in <listcomp>
+    self.rxStreams = [sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, [0, 1], {"remote:prot":"tcp", "remote:mtu":"1024"}) for sdr in self.rx_sdrs]
+  File "/usr/local/lib/python3.6/dist-packages/SoapySDR.py", line 1543, in setupStream
+    return _SoapySDR.Device_setupStream(self, *args)
+RuntimeError: Iris::setupStream: Failed to discover the IPv6 scope ID
+  (Does interface='enp2s0' have an IPv6 address)?
+[INFO] Power down and cleanup
+[INFO] Power down and cleanup
