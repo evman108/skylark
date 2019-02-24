@@ -46,6 +46,11 @@ sampsSend = np.random.uniform(0,1,nsamps)+1j*np.random.uniform(0,1,nsamps)
 period = 600;
 sampsSend = np.exp(2j*np.pi*np.arange(nsamps)/period)
 
+Ts = 1/rate
+s_freq = 1e4
+s_time_vals = np.array(np.arange(0,nsamps)).transpose()*Ts
+sampsSend = np.exp(s_time_vals*1j*2*np.pi*s_freq).astype(np.complex64)*.5
+
 
 # for sdr in [tx_sdr, rx_sdr]: sdr.setHardwareTime(0, "TRIGGER")
 # tx_sdr.writeSetting('SYNC_DELAYS', "")
