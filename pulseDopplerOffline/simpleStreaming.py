@@ -7,20 +7,20 @@ import time
 from SoapySDR import * #SOAPY_SDR_constants
 import matplotlib.pyplot as plt
 
-freq = 2.50e9
+freq = 2.60e9
 rate = 5e6
 rxGain = 20
 txGain = 30
 delay = int(1e6)
-nsamps=8092
+nsamps=8092*5
 NumSamples = nsamps*5
 reportInterval = 1
 
 rxSerial = "RF3E000069"
-#rxSerial = "RF3E000069"
+#txSerial = "RF3E000069"
 txSerial = "RF3E000075"
 txChan = 0
-rxChan = 0
+rxChan = 1
 
 tx_sdr = SoapySDR.Device(dict(driver="iris", serial = txSerial))
 rx_sdr = SoapySDR.Device(dict(driver="iris", serial = rxSerial))
@@ -31,7 +31,7 @@ rx_sdr.setFrequency(SOAPY_SDR_RX, rxChan, "RF", freq)
 rx_sdr.setGain(SOAPY_SDR_RX, rxChan, rxGain)
 rx_sdr.setAntenna(SOAPY_SDR_RX, rxChan, "TRX")
 rx_sdr.setFrequency(SOAPY_SDR_RX, rxChan, "BB", 0) #don't use cordic
-rx_sdr.setDCOffsetMode(SOAPY_SDR_RX, rxChan, False) #dc removal on rx #we'll remove this in post-processing
+rx_sdr.setDCOffsetMode(SOAPY_SDR_RX, rxChan, True) #dc removal on rx #we'll remove this in post-processing
 
 # Init Tx
 tx_sdr.setSampleRate(SOAPY_SDR_TX, txChan, rate)
@@ -77,16 +77,18 @@ total_samps = 0
 rxBuffs = np.array([], np.complex64)
 txVec = np.array([], np.complex64)
 while total_samps < NumSamples:
+
+	print("\n\n\n--------------------------------------------")
 	
 	if total_samps >= 0:
 		timeSinceTxStreamActivation = (time.time() - timeOfTxStreamActivation)*1e6
-		print("Start writing stream at %f us from stream activation" % timeSinceTxStreamActivation)
+		print("\nStart writing stream at %f us from stream activation" % timeSinceTxStreamActivation)
 	sr = tx_sdr.writeStream(txStream, [sampsSend], nsamps)
 	if sr.ret != nsamps:
 		raise Exception('tx fail - Bad write')
 	if total_samps >= 0:
 		timeSinceTxSteamActivation = (time.time() - timeOfTxStreamActivation)*1e6
-		print("Done writing stream at %f us from stream activation" % timeSinceTxStreamActivation)
+		print("\nDone writing stream at %f us from stream activation" % timeSinceTxStreamActivation)
 
 	#do some tx processing here
 	txVec = np.concatenate((txVec, sampsSend[:sr.ret]))
@@ -99,13 +101,13 @@ while total_samps < NumSamples:
 
 	if total_samps >= 0:
 		timeSinceRxStreamActivation = (time.time() - timeOfRxStreamActivation)*1e6
-		print("Start reading stream at %f us from stream activation" % timeSinceRxStreamActivation)
+		print("\nStart reading stream at %f us from stream activation" % timeSinceRxStreamActivation)
 	sr = rx_sdr.readStream(rxStream, [sampsRecv], nsamps, timeoutUs=int(10e6))		
 	if sr.ret != nsamps:
 		raise Exception('receive fail - Bad Read')
 	if total_samps >= 0:
 		timeSinceRxStreamActivation = (time.time() - timeOfRxStreamActivation)*1e6
-		print("Done reading stream at %f us from stream activation" % timeSinceRxStreamActivation)
+		print("\nDone reading stream at %f us from stream activation" % timeSinceRxStreamActivation)
 	#do some rx processing here
 	rxBuffs = np.concatenate((rxBuffs, sampsRecv[:sr.ret]))
 
