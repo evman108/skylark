@@ -10,17 +10,16 @@ import matplotlib.pyplot as plt
 freq = 2.60e9
 rate = 5e6
 rxGain = 20
-txGain = 30
+txGain = 50
 delay = int(1e6)
-nsamps=8092*5
-NumSamples = nsamps*5
+nsamps=8092
+NumSamples = nsamps*20
 reportInterval = 1
 
+txSerial = "RF3E000075" # head of the chain
 rxSerial = "RF3E000069"
-#txSerial = "RF3E000069"
-txSerial = "RF3E000075"
 txChan = 0
-rxChan = 1
+rxChan = 0
 
 tx_sdr = SoapySDR.Device(dict(driver="iris", serial = txSerial))
 rx_sdr = SoapySDR.Device(dict(driver="iris", serial = rxSerial))
@@ -52,11 +51,9 @@ s_time_vals = np.array(np.arange(0,nsamps)).transpose()*Ts
 sampsSend = np.exp(s_time_vals*1j*2*np.pi*s_freq).astype(np.complex64)*.5
 
 
-# for sdr in [tx_sdr, rx_sdr]: sdr.setHardwareTime(0, "TRIGGER")
-# tx_sdr.writeSetting('SYNC_DELAYS', "")
-# tx_sdr.writeSetting("TRIGGER_GEN", "")
-
-for sdr in [tx_sdr, rx_sdr]: sdr.setHardwareTime(0)
+tx_sdr.writeSetting('SYNC_DELAYS', "")
+for sdr in [tx_sdr, rx_sdr]: sdr.setHardwareTime(0, "TRIGGER")
+tx_sdr.writeSetting("TRIGGER_GEN", "")
 
 
 #txProtoPulse = np.exp((1j*2*np.pi*freq/rate)*np.arange(nsamps)).astype(np.complex64)

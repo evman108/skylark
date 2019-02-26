@@ -16,8 +16,8 @@ import pickle
 serials = ["RF3E000075","RF3E000069"]
 txChan = 0
 rxChan = 0
-txGain = 20 # 60 No Loopback, 20 + 30dB Attenuator for Loopback
-rxGain = 30
+txGain = 50 # 60 No Loopback, 20 + 30dB Attenuator for Loopback
+rxGain = 40
 rate = 10e6
 freq = 2500e6
 txAnt = "TRX"
@@ -78,7 +78,8 @@ txProtoPulse = inputbuffer
 # freq = 1e6
 # txProtoPulse = np.exp((1j*2*np.pi*freq/rate)*np.arange(80)).astype(np.complex64)
 
-numPulses = 1*1024
+# numPulses = 1*1024
+numPulses = 10
 txPulse = header
 for ix in range(numPulses):
     txPulse = np.concatenate((txPulse,txProtoPulse))
@@ -234,7 +235,7 @@ def continuousTxRx(dwellDuration):
             if (sr.flags & SOAPY_SDR_HAS_TIME) == 0:
                 raise Exception('receive fail - no timestamp on first readStream %s'%(str(sr)))
 
-        print("Receive Buffer Length: {}, Time Elapsed: {}".format(sr.ret, len(rxBuffs)/rate))
+        #print("Receive Buffer Length: {}, Time Elapsed: {}".format(sr.ret, len(rxBuffs)/rate))
 
         #accumulate buffer or exit loop
         if sr.ret > 0: rxBuffs = np.concatenate((rxBuffs, np.conj(rxBuff[:sr.ret])))
@@ -275,17 +276,17 @@ def continuousTxRx(dwellDuration):
     if rxTime0 is None:
         raise Exception('receive fail - no valid timestamp')
 
-    print("Saving Data")
-    data = rxBuffs
-    sigLength = len(data)
-    interleave_data = np.zeros((sigLength, 2), dtype=np.float32)
-    interleave_data[:,0] = np.real(data)
-    interleave_data[:,1] = np.imag(data)
-    interleave_data = interleave_data.flatten()
-    filename = os.getcwd() + "/skylarkDataCollect/CollectedData/" + "recvData_" + time.strftime("%Y%m%d-%H%M%S") + ".csv"
-    textdata = ' '.join([str(samp) for samp in interleave_data]) + '\n'
-    with open(filename,'w') as fn:
-        fn.write(textdata)
+    # print("Saving Data")
+    # data = rxBuffs
+    # sigLength = len(data)
+    # interleave_data = np.zeros((sigLength, 2), dtype=np.float32)
+    # interleave_data[:,0] = np.real(data)
+    # interleave_data[:,1] = np.imag(data)
+    # interleave_data = interleave_data.flatten()
+    # filename = os.getcwd() + "/skylarkDataCollect/CollectedData/" + "recvData_" + time.strftime("%Y%m%d-%H%M%S") + ".csv"
+    # textdata = ' '.join([str(samp) for samp in interleave_data]) + '\n'
+    # with open(filename,'w') as fn:
+    #     fn.write(textdata)
 
     print("Done!")
 

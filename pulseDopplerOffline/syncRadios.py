@@ -3,8 +3,8 @@ import time
 from SoapySDR import * 
 
 if __name__ == '__main__':
-	txSerial = "RF3E000069"
-	rxSerial = "RF3E000075"
+	txSerial = "RF3E000075"
+	rxSerial = "RF3E000069"
 
 	tx_sdr = SoapySDR.Device(dict(driver="iris", serial = txSerial))
 	rx_sdr = SoapySDR.Device(dict(driver="iris", serial = rxSerial))

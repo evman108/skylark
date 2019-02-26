@@ -78,7 +78,8 @@ txProtoPulse = inputbuffer
 # freq = 1e6
 # txProtoPulse = np.exp((1j*2*np.pi*freq/rate)*np.arange(80)).astype(np.complex64)
 
-numPulses = 1*1024
+#numPulses = 1*1024
+numPulses = 10
 txPulse = header
 for ix in range(numPulses):
     txPulse = np.concatenate((txPulse,txProtoPulse))

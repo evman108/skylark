@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 serials = ["RF3E000075","RF3E000069"]
 txChan = 0
 rxChan = 0
-txGain = 60
+txGain = 10
 rxGain = 40
 rate = 10e6
 freq = 2400e6
