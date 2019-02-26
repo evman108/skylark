@@ -13,7 +13,7 @@ rxGain = 20
 txGain = 50
 delay = int(1e6)
 nsamps=8092
-NumSamples = nsamps*20
+totalNumSamps = nsamps*20
 reportInterval = 1
 
 txSerial = "RF3E000075" # head of the chain
@@ -73,7 +73,7 @@ print("Commencing TX/RX")
 total_samps = 0
 rxBuffs = np.array([], np.complex64)
 txVec = np.array([], np.complex64)
-while total_samps < NumSamples:
+while total_samps < totalNumSamps:
 
 	print("\n\n\n--------------------------------------------")
 	
