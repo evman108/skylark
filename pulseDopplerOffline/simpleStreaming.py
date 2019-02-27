@@ -13,7 +13,7 @@ rxGain = 20
 txGain = 50
 delay = int(1e6)
 nsamps=8092
-totalNumSamps = nsamps*20
+totalNumSamps = nsamps*200
 reportInterval = 1
 
 txSerial = "RF3E000075" # head of the chain
@@ -74,45 +74,22 @@ total_samps = 0
 rxBuffs = np.array([], np.complex64)
 txVec = np.array([], np.complex64)
 while total_samps < totalNumSamps:
-
-	print("\n\n\n--------------------------------------------")
 	
-	if total_samps >= 0:
-		timeSinceTxStreamActivation = (time.time() - timeOfTxStreamActivation)*1e6
-		print("\nStart writing stream at %f us from stream activation" % timeSinceTxStreamActivation)
 	sr = tx_sdr.writeStream(txStream, [sampsSend], nsamps)
 	if sr.ret != nsamps:
 		raise Exception('tx fail - Bad write')
-	if total_samps >= 0:
-		timeSinceTxSteamActivation = (time.time() - timeOfTxStreamActivation)*1e6
-		print("\nDone writing stream at %f us from stream activation" % timeSinceTxStreamActivation)
-
+	
 	#do some tx processing here
 	txVec = np.concatenate((txVec, sampsSend[:sr.ret]))
-	
-	#timeSinceRxSteamActivation = (time.time() - timeOfRxStreamActivation)*1e6
-	#timeSinceRxStreamTrigger = delay*1e-3 - timeSinceRxSteamActivation
-	#print("Reading stream at %f us from stream activation, %f us from stream trigger" 
-	#	% (timeSinceRxSteamActivation, timeSinceRxStreamTrigger))	
 
-
-	if total_samps >= 0:
-		timeSinceRxStreamActivation = (time.time() - timeOfRxStreamActivation)*1e6
-		print("\nStart reading stream at %f us from stream activation" % timeSinceRxStreamActivation)
 	sr = rx_sdr.readStream(rxStream, [sampsRecv], nsamps, timeoutUs=int(10e6))		
 	if sr.ret != nsamps:
 		raise Exception('receive fail - Bad Read')
-	if total_samps >= 0:
-		timeSinceRxStreamActivation = (time.time() - timeOfRxStreamActivation)*1e6
-		print("\nDone reading stream at %f us from stream activation" % timeSinceRxStreamActivation)
+	
 	#do some rx processing here
 	rxBuffs = np.concatenate((rxBuffs, sampsRecv[:sr.ret]))
-
 	
 	total_samps += nsamps
-	if time.time() - timeOfLastPrintout > reportInterval:
-		timeOfLastPrintout=time.time()
-		print("Total Samples Sent and Received: %i" % total_samps)
 	
 	#It is probably good to sleep here, but the readStream will block sufficiently
 	#it just depends on your processing
