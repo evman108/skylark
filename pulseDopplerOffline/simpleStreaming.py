@@ -63,9 +63,13 @@ rxStream = rx_sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, [0], {})
 txStream = tx_sdr.setupStream(SOAPY_SDR_TX, SOAPY_SDR_CF32, [0], {})
 
 ts = tx_sdr.getHardwareTime() + delay
-tx_sdr.activateStream(txStream, SOAPY_SDR_HAS_TIME, ts)
+#tx_flags = SOAPY_SDR_HAS_TIME;
+tx_flags = 0;
+tx_sdr.activateStream(txStream, tx_flags, ts)
 timeOfTxStreamActivation = time.time()
-rx_sdr.activateStream(rxStream, SOAPY_SDR_HAS_TIME, ts)
+
+rx_flags= 0;
+rx_sdr.activateStream(rxStream, rx_flags, ts)
 timeOfRxStreamActivation = time.time()
 	
 timeOfLastPrintout=time.time()
