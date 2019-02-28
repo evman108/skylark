@@ -106,7 +106,6 @@ while (txSampsSent < totalNumSamps) | (rxSampsSent < totalNumSamps):
 	loopStart = time.time()
 
 	if txSampsSent < totalNumSamps:
-		print("tx")
 		sampsSend = txVec[txSampsSent:txSampsSent+nsampsToBuffer]
 		txSampsSent += nsampsToBuffer
 	else:
