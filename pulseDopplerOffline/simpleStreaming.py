@@ -15,10 +15,10 @@ delay = int(1e6)
 streamPktSize = 473
 nsampsToBuffer=  17*streamPktSize 
 writeTime = nsampsToBuffer/rate
-totalNumSamps = nsampsToBuffer*50
+totalNumSamps = nsampsToBuffer*4
 reportInterval = 1
-overTheAir = True # else simulate
-numPktsToPreBufferOnTx = 1
+overTheAir = False # else simulate
+numPktsToPreBufferOnTx = 2
 
 txSerial = "RF3E000075" # head of the chain
 rxSerial = "RF3E000069"
@@ -29,14 +29,11 @@ rxChan = 0
 #Design the transmit signal
 Ts = 1/rate
 s_freq = 1e4
-s_time_vals = np.array(np.arange(0,nsampsToBuffer)).transpose()*Ts
-sampsSend = np.exp(s_time_vals*1j*2*np.pi*s_freq).astype(np.complex64)*.5
-sampsRecv = np.zeros(nsampsToBuffer).astype(np.complex64)
+s_time_vals = np.array(np.arange(0,totalNumSamps)).transpose()*Ts
 
+txVec = np.exp(s_time_vals*1j*2*np.pi*s_freq).astype(np.complex64)*.5
 
 if overTheAir: # setup the radios
-
-
 
 	tx_sdr = SoapySDR.Device(dict(driver="iris", serial = txSerial))
 	rx_sdr = SoapySDR.Device(dict(driver="iris", serial = rxSerial))
@@ -73,52 +70,73 @@ if overTheAir: # setup the radios
 	rx_flags = SOAPY_SDR_HAS_TIME;
 	rx_sdr.activateStream(rxStream, rx_flags, ts)
 	timeOfRxStreamActivation = time.time()
+
 	
 #timeOfLastPrintout=time.time()
 print("Commencing TX/RX")
 total_samps = 0
 rxBuffs = np.array([], np.complex64)
-txVec = np.array([], np.complex64)
+txVecSent = np.array([], np.complex64)
 
+txSampsSent = 0;
+rxSampsSent = 0;
+rxBuffLag = 0;
+
+# go ahead an load a handful of 
+# pkts in the tx buffer before
+# we start iterative polling. 
+# This is to avoid underflows on tx. 
 for ix in range(numPktsToPreBufferOnTx):
+	sampsSend = txVec[txSampsSent:txSampsSent+nsampsToBuffer]
+
 	if overTheAir:
 		sr = tx_sdr.writeStream(txStream, [sampsSend], nsampsToBuffer)
 		if sr.ret != nsampsToBuffer:
 			raise Exception('tx fail - Bad write')
-		txVec = np.concatenate((txVec, sampsSend[:sr.ret]))
+		txVecSent = np.concatenate((txVec, sampsSend[:sr.ret]))
 	else:
-		txVec = np.concatenate((txVec, sampsSend))
+		txVecSent = np.concatenate((txVec, sampsSend))
+		rxLag = nsampsToBuffer*(numPktsToPreBufferOnTx+1)
+	txSampsSent += nsampsToBuffer
+	rxBuffLag += nsampsToBuffer
 
-
-while total_samps < totalNumSamps:
+sampsRecv = np.zeros(nsampsToBuffer).astype(np.complex64)
+while (txSampsSent < totalNumSamps) | (rxSampsSent < totalNumSamps):
 
 	loopStart = time.time()
 
+	if txSampsSent < totalNumSamps:
+		print("tx")
+		sampsSend = txVec[txSampsSent:txSampsSent+nsampsToBuffer]
+		txSampsSent += nsampsToBuffer
+	else:
+		sampsSend = np.zeros(nsampsToBuffer).astype(np.complex64)
+		rxBuffLag -= nsampsToBuffer
+
+
 	if overTheAir:
-	
+		
 		sr = tx_sdr.writeStream(txStream, [sampsSend], nsampsToBuffer)
 		if sr.ret != nsampsToBuffer:
 			raise Exception('tx fail - Bad write')
 	
-		#do some tx processing here
-		txVec = np.concatenate((txVec, sampsSend[:sr.ret]))
+		txVecSent = np.concatenate((txVec, sampsSend[:sr.ret]))
 
 		sr = rx_sdr.readStream(rxStream, [sampsRecv], nsampsToBuffer, timeoutUs=int(10e6))		
 		if sr.ret != nsampsToBuffer:
 			raise Exception('receive fail - Bad Read')
 	
-		#do some rx processing here
 		rxBuffs = np.concatenate((rxBuffs, sampsRecv[:sr.ret]))
 
-		print("Time in loop: %f:" % (time.time() - loopStart))
-
 	else:
-
-		txVec = np.concatenate((txVec, sampsSend))
-		sampsRecv = sampsSend
+		
+		sampsRecv = txVec[rxSampsSent: rxSampsSent+nsampsToBuffer]
 		rxBuffs = np.concatenate((rxBuffs, sampsRecv))
 	
-	total_samps += nsampsToBuffer
+	rxSampsSent += nsampsToBuffer
+	print("Time in loop: %f:" % (time.time() - loopStart))
+
+
 #cleanup streams
 if overTheAir:
 	tx_sdr.deactivateStream(txStream)
@@ -135,10 +153,10 @@ print("\nDone reading and writing")
 waveFormFig, waveFormAxList = plt.subplots(2,1,sharex=True)
 waveFormAxList[0].plot(np.real(txVec),'b')
 waveFormAxList[0].plot(np.imag(txVec),'r')
-#waveFormAxList[0].set_title('Desired Transmit')
+waveFormAxList[0].set_title('Tx')
 waveFormAxList[1].plot(np.real(rxBuffs),'b')
 waveFormAxList[1].plot(np.imag(rxBuffs),'r')
-#[1].set_title('Received Data')
+waveFormAxList[1].set_title('Rx')
 
 print("\nDone!")
 
