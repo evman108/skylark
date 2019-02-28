@@ -12,8 +12,10 @@ rate = 5e6
 rxGain = 20
 txGain = 50
 delay = int(1e6)
-nsamps=8092
-totalNumSamps = nsamps*200
+streamPktSize = 473
+nsamps=  17*streamPktSize 
+writeTime = nsamps/rate
+totalNumSamps = nsamps*50
 reportInterval = 1
 
 txSerial = "RF3E000075" # head of the chain
@@ -30,7 +32,7 @@ rx_sdr.setFrequency(SOAPY_SDR_RX, rxChan, "RF", freq)
 rx_sdr.setGain(SOAPY_SDR_RX, rxChan, rxGain)
 rx_sdr.setAntenna(SOAPY_SDR_RX, rxChan, "TRX")
 rx_sdr.setFrequency(SOAPY_SDR_RX, rxChan, "BB", 0) #don't use cordic
-rx_sdr.setDCOffsetMode(SOAPY_SDR_RX, rxChan, True) #dc removal on rx #we'll remove this in post-processing
+rx_sdr.setDCOffsetMode(SOAPY_SDR_RX, rxChan, False) #dc removal on rx #we'll remove this in post-processing
 
 # Init Tx
 tx_sdr.setSampleRate(SOAPY_SDR_TX, txChan, rate)
@@ -77,7 +79,17 @@ print("Commencing TX/RX")
 total_samps = 0
 rxBuffs = np.array([], np.complex64)
 txVec = np.array([], np.complex64)
+loopTime = np.array([])
+
+
+sr = tx_sdr.writeStream(txStream, [sampsSend], nsamps)
+if sr.ret != nsamps:
+	raise Exception('tx fail - Bad write')
+txVec = np.concatenate((txVec, sampsSend[:sr.ret]))
+
 while total_samps < totalNumSamps:
+
+	loopStart = time.time()
 	
 	sr = tx_sdr.writeStream(txStream, [sampsSend], nsamps)
 	if sr.ret != nsamps:
@@ -94,6 +106,8 @@ while total_samps < totalNumSamps:
 	rxBuffs = np.concatenate((rxBuffs, sampsRecv[:sr.ret]))
 	
 	total_samps += nsamps
+
+	print("\nTime in loop: %f:" % (time.time() - loopStart))
 	
 	#It is probably good to sleep here, but the readStream will block sufficiently
 	#it just depends on your processing
@@ -109,7 +123,7 @@ waveFormAxList[1].plot(np.imag(rxBuffs),'r')
 
 
 #cleanup streams
-print("Cleanup streams")
+print("\nCleanup streams")
 tx_sdr.deactivateStream(txStream)
 rx_sdr.deactivateStream(rxStream)
 rx_sdr.closeStream(rxStream)
