@@ -1,12 +1,5 @@
 #!/usr/bin/python3
-
-import numpy as np
-import sys
-import SoapySDR
-import time
-from SoapySDR import * #SOAPY_SDR_constants
-import matplotlib.pyplot as plt
-
+overTheAir = False # else simulate
 freq = 2.60e9
 rate = 5e6
 rxGain = 25
@@ -18,7 +11,7 @@ writeTime = nsampsToBuffer/rate
 numBufferWritesPerDwell = 30
 totalNumSamps = nsampsToBuffer * numBufferWritesPerDwell
 reportInterval = 1
-overTheAir = True # else simulate
+
 numPktsToPreBufferOnTx = 2
 extraZerosToAppend = 17
 dwellTime = totalNumSamps/rate
@@ -27,6 +20,23 @@ txSerial = "RF3E000075" # head of the chain
 rxSerial = "RF3E000069"
 txChan = 0
 rxChan = 0
+
+
+import numpy as np
+import scipy as sp
+import sys
+import time
+import matplotlib.pyplot as plt
+
+if overTheAir:
+	import SoapySDR
+	from SoapySDR import * #SOAPY_SDR_constants
+else:
+	# setup noise params
+	numTargets = 1
+	snr = 1e7 # linear
+	maxDelay = 10 # samples
+	maxDopper = 10e3 # Hz 
 
 
 #Design the transmit signal
@@ -46,7 +56,7 @@ txProtoPulse = np.concatenate((inputbuffer, np.zeros(extraZerosToAppend).astype(
 pulseLength = len(txProtoPulse)
 
 # numPulses = 1*1024
-numPulses = (totalNumSamps-header_len)/pulseLength
+numPulses = int((totalNumSamps-header_len)/pulseLength)
 pri = pulseLength/rate
 print("Transmitting %d pulses over a %.1f ms dwell" % (numPulses,dwellTime*1e3))
 footer_len = (totalNumSamps-header_len)%pulseLength
@@ -161,6 +171,8 @@ while (txSampsSent < totalNumSamps) | (rxSampsSent < totalNumSamps):
 	rxSampsSent += nsampsToBuffer
 	print("Time in loop: %f:" % (time.time() - loopStart))
 
+numRxSamps = len(rxBuffs);
+assert(numRxSamps == numTxSamps)
 
 #cleanup streams
 if overTheAir:
@@ -168,11 +180,46 @@ if overTheAir:
 	tx_sdr.closeStream(txStream)
 	rx_sdr.deactivateStream(rxStream)
 	rx_sdr.closeStream(rxStream)
-
-
+else:
+	# apply noise, delay, and doppler
+	delay = maxDelay;
+	# apply delay
+	rxBuffs = np.roll(rxBuffs,delay)
+	#apply Doppler
+	dopplerShift =  1/(10*pulseLength)
+	dopplerModulation= np.exp(2*1j*np.pi*dopplerShift*np.arange(numRxSamps)) 
+	rxBuffs = dopplerModulation*rxBuffs
+	#apple noise 
+	noiseVec = 1/np.sqrt(snr)*(np.random.randn(numRxSamps) + 1j*np.random.randn(numRxSamps))
+	rxBuffs = rxBuffs + noiseVec
 	
 	#It is probably good to sleep here, but the readStream will block sufficiently
 	#it just depends on your processing
+
+# Range-Doppler Processing
+# strip off the header
+txVec = txVec[header_len:]
+rxBuffs = rxBuffs[header_len:]
+
+
+pulseCompressedTx = np.convolve(txProtoPulse[::-1].conjugate(),txVec)
+pulseCompressedRx = np.convolve(txProtoPulse[::-1].conjugate(),rxBuffs)
+
+## sort data into slow time and fast time
+
+pulseCompressionPeak = np.max(abs(np.convolve(txProtoPulse[::-1], txProtoPulse.conjugate()))) 
+zeroRangeBins = sp.argwhere(pulseCompressedTx==pulseCompressionPeak)
+assert(zeroRangeBins[1][0] - zeroRangeBins[0][0] == pulseLength)
+firstZeroRangeBin = zeroRangeBins[0][0]
+lastZeroRangeBin = zeroRangeBins[-1][0]
+
+rangeSamplesTx = np.reshape(pulseCompressedTx[firstZeroRangeBin:lastZeroRangeBin+pulseLength],
+	[numPulses,pulseLength])
+
+rangeSamplesRx = np.reshape(pulseCompressedRx[firstZeroRangeBin:lastZeroRangeBin+pulseLength],
+	[numPulses,pulseLength])
+
+## TO DO: compute fft over slow time to realize the RD map
 
 print("\nDone reading and writing")
 waveFormFig, waveFormAxList = plt.subplots(2,1,sharex=True)
@@ -182,6 +229,14 @@ waveFormAxList[0].set_title('Tx')
 waveFormAxList[1].plot(np.real(rxBuffs),'b')
 waveFormAxList[1].plot(np.imag(rxBuffs),'r')
 waveFormAxList[1].set_title('Rx')
+
+matchedFilterFig, matchedFilterAxList = plt.subplots(2,1,sharex=True)
+matchedFilterAxList[0].plot(np.real(pulseCompressedTx),'b')
+matchedFilterAxList[0].plot(np.imag(pulseCompressedTx),'r')
+matchedFilterAxList[0].set_title('Tx Compressed')
+matchedFilterAxList[1].plot(np.real(pulseCompressedRx),'b')
+matchedFilterAxList[1].plot(np.imag(pulseCompressedRx),'r')
+matchedFilterAxList[1].set_title('Rx Compressed')
 
 print("\nDone!")
 
